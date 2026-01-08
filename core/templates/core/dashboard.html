@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Decision Matrix</title>
+    <style>
+        /* Basic clean styling for MVP */
+        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .form-section { background: #f4f4f4; padding: 20px; margin-bottom: 30px; border-radius: 8px; }
+        .pyramid-container { display: flex; flex-direction: column; align-items: center; margin-top: 30px; }
+        
+        /* The Pyramid Block Styles */
+        .task-block {
+            background-color: #4CAF50; /* Green */
+            color: white;
+            text-align: center;
+            padding: 10px;
+            margin: 2px 0;
+            border-radius: 4px;
+            transition: width 0.5s;
+        }
+        
+        /* Helper to center the text inside blocks */
+        .block-content { font-weight: bold; }
+        .block-details { font-size: 0.8em; opacity: 0.9; }
+    </style>
+</head>
+<body>
+
+    <h1>Decision Matrix Dashboard</h1>
+
+    <div class="form-section">
+        <h3>Add New Task</h3>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Add Task</button>
+        </form>
+    </div>
+
+    <div style="text-align: center; margin-bottom: 20px;">
+        <form method="get">
+            <label>Available Hours: </label>
+            <input type="number" name="hours" value="{{ total_hours }}" step="0.5" style="width: 60px;">
+            <button type="submit">Recalculate</button>
+        </form>
+    </div>
+
+    <div class="pyramid-container">
+        <h3>Your Priority Pyramid</h3>
+        
+        {% for task in pyramid_tasks %}
+            <div class="task-block" style="width: {{ task.weight_percent }}%;">
+                <div class="block-content">{{ task.title }}</div>
+                <div class="block-details">
+                    Score: {{ task.total_score }} | 
+                    Allocation: {{ task.allocated_hours }} Hours
+                </div>
+            </div>
+        {% empty %}
+            <p>No tasks yet. Add some above!</p>
+        {% endfor %}
+    </div>
+
+</body>
+</html>
