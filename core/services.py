@@ -13,6 +13,8 @@ def calculate_pyramid_data(tasks, total_daily_hours):
     if total_context_score == 0:
         return []
     
+    max_score = max(task.total_score for task in tasks)
+    
     processed_tasks = []
     
     for task in tasks:
@@ -23,6 +25,22 @@ def calculate_pyramid_data(tasks, total_daily_hours):
         # 3. Calculate Time Allocation
         # Formula: Total Hours * (Percent / 100)
         allocated_hours = total_daily_hours * (weight_percent / 100)
+        
+        if max_score > 0:
+            visual_width_percent = (task.total_score / max_score) * 100
+        else:
+            visual_width_percent = 0
+            
+        # COLOR LOGIN (New!)
+        # We assign Tailwind CSS gradients based on how "Hot" the task is.
+        # We compare the task's visual % (relative to the top task).
+        
+        if visual_width_percent >= 80:
+            color_class = "from-rose-500 to-red-600"
+        elif visual_width_percent >=45:
+            color_class = "from-amber-400 to-orange-500"
+        else:
+            color_class = "from-emerald-400 to-teal-500"
 
         # This disconnects us from the database model, which is faster for reading
         task_data = {
@@ -30,7 +48,9 @@ def calculate_pyramid_data(tasks, total_daily_hours):
             'title': task.title,
             'total_score': task.total_score,
             'weight_percent': round(weight_percent, 1),
-            'allocated_hours': round(allocated_hours, 2)
+            'visual_width_percent': round(visual_width_percent, 1),
+            'allocated_hours': round(allocated_hours, 2),
+            'color_class': color_class,
         }
         processed_tasks.append(task_data)
     

@@ -1,66 +1,105 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Decision Matrix</title>
-    <style>
-        /* Basic clean styling for MVP */
-        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .form-section { background: #f4f4f4; padding: 20px; margin-bottom: 30px; border-radius: 8px; }
-        .pyramid-container { display: flex; flex-direction: column; align-items: center; margin-top: 30px; }
-        
-        /* The Pyramid Block Styles */
-        .task-block {
-            background-color: #4CAF50; /* Green */
-            color: white;
-            text-align: center;
-            padding: 10px;
-            margin: 2px 0;
-            border-radius: 4px;
-            transition: width 0.5s;
-        }
-        
-        /* Helper to center the text inside blocks */
-        .block-content { font-weight: bold; }
-        .block-details { font-size: 0.8em; opacity: 0.9; }
-    </style>
-</head>
-<body>
+{% extends 'core/base.html' %}
 
-    <h1>Decision Matrix Dashboard</h1>
+{% block content %}
 
-    <div class="form-section">
-        <h3>Add New Task</h3>
-        <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Add Task</button>
-        </form>
+<div class="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+        <h1 class="text-3xl font-bold text-slate-900">Mission Control</h1>
+        <p class="text-slate-500 mt-1">Allocate your time assets based on ROI.</p>
     </div>
 
-    <div style="text-align: center; margin-bottom: 20px;">
-        <form method="get">
-            <label>Available Hours: </label>
-            <input type="number" name="hours" value="{{ total_hours }}" step="0.5" style="width: 60px;">
-            <button type="submit">Recalculate</button>
+    <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex items-center gap-3">
+        <form method="get" class="flex items-center gap-2">
+            <label class="text-sm font-medium text-slate-600">Daily Budget (Hours):</label>
+            <input type="number" name="hours" value="{{ total_hours }}" step="0.5" 
+                   class="w-20 border border-slate-300 rounded px-2 py-1 text-center focus:ring-2 focus:ring-indigo-500 outline-none">
+            <button type="submit" 
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-1.5 rounded transition-colors">
+                Recalculate
+            </button>
         </form>
     </div>
+</div>
 
-    <div class="pyramid-container">
-        <h3>Your Priority Pyramid</h3>
-        
-        {% for task in pyramid_tasks %}
-            <div class="task-block" style="width: {{ task.weight_percent }}%;">
-                <div class="block-content">{{ task.title }}</div>
-                <div class="block-details">
-                    Score: {{ task.total_score }} | 
-                    Allocation: {{ task.allocated_hours }} Hours
-                </div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    
+    <div class="lg:col-span-4">
+        <div class="bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden sticky top-6">
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-100">
+                <h3 class="font-semibold text-slate-800">Add New Task</h3>
             </div>
-        {% empty %}
-            <p>No tasks yet. Add some above!</p>
-        {% endfor %}
+            <div class="p-6">
+                <form method="post" class="space-y-4">
+                    {% csrf_token %}
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Task Title</label>
+                        <input type="text" name="title" required 
+                               class="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow" 
+                               placeholder="e.g. Gym, Learn Python">
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Urgency</label>
+                            <input type="number" name="urgency_score" min="1" max="10" value="5" required
+                                   class="w-full border border-slate-300 rounded px-2 py-2 text-center focus:ring-2 focus:ring-red-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Risk</label>
+                            <input type="number" name="risk_score" min="1" max="10" value="5" required
+                                   class="w-full border border-slate-300 rounded px-2 py-2 text-center focus:ring-2 focus:ring-orange-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Reward</label>
+                            <input type="number" name="reward_score" min="1" max="10" value="5" required
+                                   class="w-full border border-slate-300 rounded px-2 py-2 text-center focus:ring-2 focus:ring-green-500 outline-none">
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-400 text-center">Scale: 1 (Low) to 10 (High)</p>
+
+                    <button type="submit" 
+                            class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 rounded-lg shadow-md hover:shadow-lg transition-all">
+                        Add to Matrix
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 
-</body>
-</html>
+    <div class="lg:col-span-8">
+        <div class="flex flex-col items-center">
+            
+            {% if pyramid_tasks %}
+                <div class="w-full flex flex-col items-center gap-1">
+                    {% for task in pyramid_tasks %}
+                        <div class="pyramid-block relative group rounded-md shadow-sm flex justify-between items-center px-4 py-3 text-white overflow-hidden bg-gradient-to-r {{ task.color_class }}"
+                            style="width: {{ task.visual_width_percent }}%; min-width: 300px; margin-bottom: 4px; opacity: 0.95;">
+                            
+                            <div class="flex flex-col leading-tight z-10">
+                                <span class="font-bold text-lg text-white shadow-black drop-shadow-md">{{ task.title }}</span>
+                                <span class="text-xs text-white/90">Score: {{ task.total_score }}</span>
+                            </div>
+
+                            <div class="z-10 bg-white/20 backdrop-blur-sm rounded px-3 py-1 border border-white/30">
+                                <span class="font-bold text-xl">{{ task.allocated_hours }}</span>
+                                <span class="text-xs uppercase tracking-wider ml-1">Hrs</span>
+                            </div>
+                            <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-20 opacity-50">
+                    <div class="text-6xl mb-4">⚖️</div>
+                    <h3 class="text-xl font-medium text-slate-600">No tasks calibrated</h3>
+                    <p class="text-slate-400">Add your tasks on the left to build your pyramid.</p>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
